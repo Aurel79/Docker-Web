@@ -22,14 +22,10 @@ pipeline {
                 sh 'docker compose up -d'
             }
         }
-    }
-
-    post {
-        success {
-            echo '✅ Build and deploy completed successfully!'
-        }
-        failure {
-            echo '❌ Build failed.'
+        stage('Jenkins Github') {
+            steps {
+                echo 'Hallo saya success'
+            }
         }
     }
 }
