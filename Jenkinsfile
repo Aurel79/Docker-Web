@@ -4,30 +4,35 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Checking out source code...'
+                echo 'Checking out source code...'
                 checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker image...'
-                sh 'docker compose build'
+                echo 'Building Docker image...'
+                sh 'docker build -t calculator-app .'
             }
         }
 
-        stage('Deploy Container') {
+        stage('Run Container') {
             steps {
-                echo '🚀 Starting containers...'
-                sh 'docker compose up -d'
-            }
-        }
-        stage('Jenkins Github') {
-            steps {
-                echo 'Hallo saya success'
+                echo 'Running container on port 8090...'
+                sh 'docker run -d -p 8090:8090 calculator-app'
             }
         }
     }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
 }
+
 
 
