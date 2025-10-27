@@ -1,48 +1,36 @@
 pipeline {
-    agent any
-
-    stages {
-        stage('Checkout') {
-            steps {
-                echo 'Checking out source code...'
-                checkout scm
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker image...'
-                script {
-                    // Gunakan tag unik (misalnya pakai BUILD_NUMBER)
-                    dockerImage = docker.build("calculator-app:${env.BUILD_NUMBER}")
-                }
-            }
-        }
-
-        stage('Run Container') {
-            steps {
-                echo 'Running container on port 8090...'
-                script {
-                    // Pastikan tidak ada container sebelumnya yang masih jalan
-                    sh '''
-                        docker ps -q --filter "ancestor=calculator-app:${BUILD_NUMBER}" | xargs -r docker stop
-                        docker ps -aq --filter "ancestor=calculator-app:${BUILD_NUMBER}" | xargs -r docker rm
-                    '''
-                    sh 'docker run -d -p 8090:8090 --name calculator-app calculator-app:${BUILD_NUMBER}'
-                }
-            }
-        }
+  agent any
+  environment {
+  // ubah 'youruser/simple-app' dengan nama kamu dan repo proyek kamu
+    IMAGE_NAME = 'aureliamaranatha/simple-app'
+  // ubah 'dockerhub-credentials' dengan credential yang sudah kamu buat 
+    REGISTRY_CREDENTIALS = 'dockerhub-credentials'
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
-
-    post {
-        success {
-            echo '✅ Pipeline completed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed.'
-        }
-        always {
-            echo 'Cleaning up...'
-        }
+    stage('Build') {
+      steps {
+        bat 'echo "Build di Windows"'
+      }
     }
+    stage('Build Docker Image') {
+      steps {
+        bat """docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ."""
+      }
+    }
+    stage('Push Docker Image') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+          bat """docker login -u %USER% -p %PASS%"""
+          bat """docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}"""
+          bat """docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest"""
+          bat """docker push ${env.IMAGE_NAME}:latest"""
+        }
+      }
+    }
+  }
 }
