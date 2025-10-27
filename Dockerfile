@@ -11,7 +11,12 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy semua file ke container
+# Copy composer files terlebih dahulu
+COPY composer.json composer.lock ./
+
+RUN composer install --no-dev --no-interaction --optimize-autoloader
+
+# Baru copy sisa file
 COPY . .
 
 # Jalankan Composer install jika belum ada vendor
